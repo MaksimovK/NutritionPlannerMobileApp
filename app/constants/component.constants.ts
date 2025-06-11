@@ -1,0 +1,22 @@
+const DEFAULT_ACTIVE_OPACITY = 0.7
+const DEFAULT_ICON_SIZE = 20
+const DEFAULT_SCROLL_EVENT_THROTTLE = 32
+const DEFAULT_TOAST_VISIBLE_TIME = 3000
+
+const DEFAULT_SKELETON_ANIMATION_PROPS = {
+	from: { opacity: 0.5 },
+	animate: { opacity: 1 },
+	transition: {
+		type: 'timing' as const,
+		duration: 1000,
+		loop: true
+	}
+}
+
+export {
+	DEFAULT_ACTIVE_OPACITY,
+	DEFAULT_ICON_SIZE,
+	DEFAULT_SCROLL_EVENT_THROTTLE,
+	DEFAULT_SKELETON_ANIMATION_PROPS,
+	DEFAULT_TOAST_VISIBLE_TIME
+}
