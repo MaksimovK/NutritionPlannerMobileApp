@@ -4,7 +4,6 @@ import {
 	FlatList,
 	Image,
 	Modal,
-	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
@@ -12,22 +11,60 @@ import {
 } from 'react-native'
 import { useTypedNavigation } from '../../hooks/navigation/useTypedNavigation'
 import { useTypedRoute } from '../../hooks/navigation/useTypedRoute'
-import { useAddProductToMealPlan } from '../../hooks/queries/mealPlanItem.queries'
-import { useGetAllProducts } from '../../hooks/queries/product.queries'
+import {
+	useAddProductToMealPlan,
+	useAddRecipeToMealPlan
+} from '../../hooks/queries/mealPlanItem.queries'
+import {
+	useGetAllProducts,
+	useSearchProducts
+} from '../../hooks/queries/product.queries'
 import {
 	useGetAllRecipes,
 	useSearchRecipes
 } from '../../hooks/queries/recipe.queries'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useProductStore } from '../../store/products'
+import { useRecipeStore } from '../../store/recipes'
 import { useAuthTokenStore } from '../../store/token'
-import { IProduct } from '../../types/product.types'
-import { IRecipe } from '../../types/recipe.types'
+import {
+	ProductFilter as FilterType,
+	IProduct
+} from '../../types/product.types'
+import { IRecipe, RecipeFilter } from '../../types/recipe.types'
+import { Role } from '../../types/user.types'
 import ProductItem from '../elements/product-item/ProductItem'
 import RecipeItem from '../elements/recipe-item/RecipeItem'
 import AddProductModal from '../ui/modals/AddProductModal'
+import AddRecipeModal from '../ui/modals/AddRecipeModal'
+import FilterProductModal from '../ui/modals/filters/products/FilterProductModal'
+import FilterRecipeModal from '../ui/modals/filters/recipes/FilterRecipeModal'
 
 export default function ProductPage() {
+	const [filterProduct, setFilterProduct] = useState<FilterType>({
+		highProtein: false,
+		lowCalorie: false,
+		highCalorie: false,
+		lowCarb: false,
+		highCarb: false,
+		lowFat: false,
+		highFat: false
+	})
+	const [isFilterProductModalVisible, setIsFilterProductModalVisible] =
+		useState(false)
+
+	const [filterRecipe, setFilterRecipe] = useState<RecipeFilter>({
+		highProtein: false,
+		lowCalorie: false,
+		highCalorie: false,
+		lowCarb: false,
+		highCarb: false,
+		lowFat: false,
+		highFat: false
+	})
+	const [isFilterRecipeModalVisible, setIsFilterRecipeModalVisible] =
+		useState(false)
+
 	const { userId, userRole } = useAuthTokenStore()
 	const navigation = useTypedNavigation()
 	const route = useTypedRoute<'ProductPage'>()
@@ -35,16 +72,21 @@ export default function ProductPage() {
 	const mealPlanId = route.params.mealPlanId
 	const mealTimeName = route.params.mealTimeName
 
+	const { recipes, removeRecipe } = useRecipeStore()
+	const [selectedRecipe, setSelectedRecipe] = useState<IRecipe | null>(null)
+	const [isRecipeModalVisible, setIsRecipeModalVisible] = useState(false)
 	const [recipeSearch, setRecipeSearch] = useState('')
 	const { data: allRecipes, isLoading: isLoadingRecipesAll } =
-		useGetAllRecipes()
+		useGetAllRecipes(filterRecipe)
 	const { data: searchedRecipes, isLoading: isLoadingRecipesSearch } =
-		useSearchRecipes(recipeSearch)
+		useSearchRecipes(recipeSearch, filterRecipe)
+	const { mutate: addRecipeToMealPlan } = useAddRecipeToMealPlan()
 
-	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-		useGetAllProducts()
-	const { products, removeProduct } = useProductStore()
 	const [searchText, setSearchText] = useState('')
+	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useGetAllProducts(filterProduct)
+
+	const { products, removeProduct } = useProductStore()
 	const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null)
 	const [isModalVisible, setIsModalVisible] = useState(false)
 	const [isAtBottom, setIsAtBottom] = useState(false)
@@ -55,32 +97,41 @@ export default function ProductPage() {
 
 	const { mutate: addProductToMealPlan } = useAddProductToMealPlan()
 
+	const { data: searchedProducts } = useSearchProducts(
+		debouncedSearchText,
+		filterProduct
+	)
+
 	const filteredProducts = useMemo(() => {
+		if (debouncedSearchText && searchedProducts) {
+			let filtered = searchedProducts
+			if (userRole !== Role.Admin) {
+				filtered = filtered.filter(
+					p => p.isApproved || p.createdByUserId === userId
+				)
+			}
+			return filtered.map(product => {
+				const productInStore = products.find(item => item.id === product.id)
+				return productInStore ? { ...product, ...productInStore } : product
+			})
+		}
+
+		// Иначе используем основной список
 		if (!data?.pages) return []
 		const allProducts = data.pages.flat()
 
-		// Фильтрация продуктов для обычного пользователя
 		let filtered = allProducts
-		if (userRole !== 'Admin') {
-			filtered = allProducts.filter(
+		if (userRole !== Role.Admin) {
+			filtered = filtered.filter(
 				p => p.isApproved || p.createdByUserId === userId
 			)
 		}
 
-		const mergedProducts = filtered.map(product => {
+		return filtered.map(product => {
 			const productInStore = products.find(item => item.id === product.id)
-			if (productInStore) {
-				return { ...product, ...productInStore }
-			}
-			return product
+			return productInStore ? { ...product, ...productInStore } : product
 		})
-
-		if (!searchText) return mergedProducts
-
-		return mergedProducts.filter(product =>
-			product.name.toLowerCase().includes(searchText.toLowerCase())
-		)
-	}, [data, products, userId, userRole, debouncedSearchText])
+	}, [data, products, userId, userRole, debouncedSearchText, searchedProducts])
 
 	const loadMoreData = () => {
 		if (!isLoading && hasNextPage) {
@@ -96,6 +147,17 @@ export default function ProductPage() {
 		} else {
 			setSelectedProduct(product)
 			setIsModalVisible(true)
+		}
+	}
+
+	const handleRecipePress = (recipe: IRecipe) => {
+		const isRecipeInStore = recipes.some(r => r.id === recipe.id)
+
+		if (isRecipeInStore) {
+			removeRecipe(recipe.id)
+		} else {
+			setSelectedRecipe(recipe)
+			setIsRecipeModalVisible(true)
 		}
 	}
 
@@ -119,6 +181,27 @@ export default function ProductPage() {
 				})
 			} catch (error) {
 				console.error(`Ошибка добавления продукта ${product.name}:`, error)
+			}
+		}
+	}
+
+	const handleAddMultipleRecipesToMealPlan = async (
+		mealPlanId: number,
+		mealTimeId: number,
+		recipes: IRecipe[]
+	) => {
+		for (const recipe of recipes) {
+			try {
+				const weight = recipe.weight || recipe.totalWeight || 100
+
+				await addRecipeToMealPlan({
+					mealPlanId,
+					mealTimeId,
+					recipeId: recipe.id,
+					amount: weight
+				})
+			} catch (error) {
+				console.error(`Ошибка добавления рецепта ${recipe.name}:`, error)
 			}
 		}
 	}
@@ -148,17 +231,50 @@ export default function ProductPage() {
 		? isLoadingRecipesSearch
 		: isLoadingRecipesAll
 
+	const countActiveFilters = (filter: any) => {
+		return Object.values(filter).filter(value => value).length
+	}
+
 	const renderContent = () => {
 		if (activeTab === 'products') {
 			return (
 				<>
-					<TextInput
-						className='h-10 border ml-1 border-gray-300 rounded-lg px-3 text-sm flex-nowrap text-gray-800 w-full mb-2'
-						placeholder='Поиск продукта...'
-						placeholderTextColor='gray'
-						value={searchText}
-						onChangeText={setSearchText}
-					/>
+					<View className='flex-row items-center justify-between gap-2 mb-2'>
+						<TextInput
+							className='h-10 border ml-1 border-gray-300 rounded-lg px-3 text-sm flex-nowrap text-gray-800 w-[85%]'
+							placeholder='Поиск продукта...'
+							placeholderTextColor='gray'
+							value={searchText}
+							onChangeText={setSearchText}
+						/>
+
+						<TouchableOpacity
+							onPress={() => setIsFilterProductModalVisible(true)}
+						>
+							{countActiveFilters(filterProduct) > 0 && (
+								<View className='absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center'>
+									<Text className='text-white text-xs'>
+										{countActiveFilters(filterProduct)}
+									</Text>
+								</View>
+							)}
+
+							<Image
+								className='w-6 h-6 mr-2'
+								source={require('../../assets/icons/filters.png')}
+							/>
+						</TouchableOpacity>
+
+						<FilterProductModal
+							visible={isFilterProductModalVisible}
+							onClose={() => setIsFilterProductModalVisible(false)}
+							onApply={newFilter => {
+								setFilterProduct(newFilter)
+								setIsFilterProductModalVisible(false)
+							}}
+							initialFilter={filterProduct}
+						/>
+					</View>
 
 					<FlatList
 						data={filteredProducts}
@@ -238,13 +354,42 @@ export default function ProductPage() {
 		} else {
 			return (
 				<>
-					<TextInput
-						className='h-10 border border-gray-300 rounded-lg px-3 mb-1 text-gray-800'
-						placeholder='Поиск рецепта...'
-						placeholderTextColor='gray'
-						value={recipeSearch}
-						onChangeText={setRecipeSearch}
-					/>
+					<View className='flex-row items-center justify-between gap-2 mb-2'>
+						<TextInput
+							className='h-10 border border-gray-300 rounded-lg px-3 text-gray-800 w-[85%]'
+							placeholder='Поиск рецепта...'
+							placeholderTextColor='gray'
+							value={recipeSearch}
+							onChangeText={setRecipeSearch}
+						/>
+
+						<TouchableOpacity
+							onPress={() => setIsFilterRecipeModalVisible(true)}
+						>
+							{countActiveFilters(filterRecipe) > 0 && (
+								<View className='absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center'>
+									<Text className='text-white text-xs'>
+										{countActiveFilters(filterRecipe)}
+									</Text>
+								</View>
+							)}
+
+							<Image
+								className='w-6 h-6 mr-2'
+								source={require('../../assets/icons/filters.png')}
+							/>
+						</TouchableOpacity>
+
+						<FilterRecipeModal
+							visible={isFilterRecipeModalVisible}
+							onClose={() => setIsFilterRecipeModalVisible(false)}
+							onApply={newFilter => {
+								setFilterRecipe(newFilter)
+								setIsFilterRecipeModalVisible(false)
+							}}
+							initialFilter={filterRecipe}
+						/>
+					</View>
 
 					{isLoadingRecipes ? (
 						<ActivityIndicator size='large' color='#4CAF50' />
@@ -257,10 +402,54 @@ export default function ProductPage() {
 							data={recipesToShow}
 							keyExtractor={(item: IRecipe) => item.id.toString()}
 							renderItem={({ item }) => (
-								<RecipeItem recipe={item} onPress={() => {}} />
+								<RecipeItem
+									recipe={item}
+									onPress={handleRecipePress}
+									isSelected={recipes.some(r => r.id === item.id)}
+								/>
 							)}
 						/>
 					)}
+
+					{!isAtBottom && recipes.length > 0 && (
+						<View className='absolute bottom-20 left-1/2'>
+							<TouchableOpacity
+								onPress={() => {
+									handleAddMultipleRecipesToMealPlan(
+										mealPlanId,
+										mealTimeId,
+										recipes
+									)
+									navigation.goBack()
+								}}
+								className='relative w-[45px] h-[45px] bg-[#3b82f6] rounded-full items-center justify-center shadow-lg shadow-gray-800'
+							>
+								<Image
+									className='w-[30px] h-[30px]'
+									source={require('../../assets/icons/check-mark.png')}
+								/>
+								<View className='w-5 h-5 absolute bottom-0 -right-1 bg-white rounded-full shadow-sm shadow-gray-800'>
+									<Text className='text-gray-800 text-sm text-center'>
+										{recipes.length}
+									</Text>
+								</View>
+							</TouchableOpacity>
+						</View>
+					)}
+
+					<Modal
+						animationType='slide'
+						transparent={true}
+						visible={isRecipeModalVisible}
+						onRequestClose={() => setIsRecipeModalVisible(false)}
+					>
+						{selectedRecipe && (
+							<AddRecipeModal
+								recipe={selectedRecipe}
+								onClose={() => setIsRecipeModalVisible(false)}
+							/>
+						)}
+					</Modal>
 
 					<TouchableOpacity
 						className='bg-[#4CAF50] py-2 rounded-lg items-center mt-2'
@@ -331,14 +520,3 @@ export default function ProductPage() {
 		</View>
 	)
 }
-
-const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: '#f5f5f5' },
-	tabs: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ddd' },
-	tab: { flex: 1, padding: 12, alignItems: 'center' },
-	tabActive: { borderBottomWidth: 2, borderColor: '#4CAF50' },
-	tabText: { color: '#777' },
-	tabTextActive: { color: '#4CAF50', fontWeight: 'bold' },
-	content: { flex: 1, padding: 8 },
-	empty: { textAlign: 'center', color: '#999', marginTop: 20 }
-})

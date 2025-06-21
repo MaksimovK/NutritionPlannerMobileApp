@@ -4,6 +4,7 @@ import { useApproveProduct } from '../../../hooks/queries/product.queries'
 import { useProductStore } from '../../../store/products'
 import { useAuthTokenStore } from '../../../store/token'
 import { IProduct } from '../../../types/product.types'
+import { Role } from '../../../types/user.types'
 
 interface IProductItemProps {
 	item: IProduct
@@ -22,7 +23,7 @@ export default function ProductItem({
 
 	const isProductInStore = products.some(product => product.id === item.id)
 	const isCurrentUserCreator = userId === item.createdByUserId
-	const isAdmin = userRole === 'Admin'
+	const isAdmin = userRole === Role.Admin
 
 	// Определяем цвет фона в зависимости от статуса
 	const getBackgroundColor = () => {

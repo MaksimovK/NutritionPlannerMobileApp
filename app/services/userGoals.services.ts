@@ -1,4 +1,4 @@
-import { axiosClassic } from '../api/interceptor'
+import { axiosAuth } from '../api/interceptor'
 import {
 	ICreateUserGoalRequest,
 	IUpdateUserGoalRequest,
@@ -10,22 +10,19 @@ class UserGoalsService {
 	private BASE_URL = 'UserGoals'
 
 	async getUserGoals(userId: string) {
-		const response = await axiosClassic.get<IUserGoalsResponse>(
+		const response = await axiosAuth.get<IUserGoalsResponse>(
 			`${this.BASE_URL}/${userId}`
 		)
 		return response.data
 	}
 
 	async createUserGoal(data: ICreateUserGoalRequest) {
-		const response = await axiosClassic.post<IUserGoal>(
-			`${this.BASE_URL}`,
-			data
-		)
+		const response = await axiosAuth.post<IUserGoal>(`${this.BASE_URL}`, data)
 		return response.data
 	}
 
 	async updateUserGoal(data: IUpdateUserGoalRequest) {
-		const response = await axiosClassic.put<IUserGoal>(
+		const response = await axiosAuth.put<IUserGoal>(
 			`${this.BASE_URL}/${data.userId}`,
 			data
 		)

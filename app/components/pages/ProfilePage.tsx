@@ -16,6 +16,7 @@ import {
 	useUserGoals
 } from '../../hooks/queries/userGoals.queries'
 import { useAuthTokenStore } from '../../store/token'
+import { Role } from '../../types/user.types'
 import ProfileForm from '../ui/forms/ProfileForm'
 
 export default function ProfilePage() {
@@ -87,7 +88,7 @@ export default function ProfilePage() {
 					</View>
 					<TouchableOpacity
 						onPress={() => {
-							if (userRole === 'Admin') navigation.navigate('AdminPanelPage')
+							if (userRole === Role.Admin) navigation.navigate('AdminPanelPage')
 						}}
 					>
 						<Image
@@ -115,7 +116,9 @@ export default function ProfilePage() {
 				className='flex-row justify-center items-center space-x-2 border-black border rounded-xl mx-5 mt-5'
 			>
 				<Text className='text-black text-center py-3'>
-					Обратиться к диетологу
+					{userRole === Role.Dietitian
+						? 'Мои клиенты'
+						: 'Обратиться к диетологу'}
 				</Text>
 				<Image
 					className='w-6 h-6 shadow-xl shadow-black'

@@ -29,11 +29,16 @@ import {
 	useUnapprovedProducts
 } from '../../hooks/queries/product.queries'
 import { useGetUnapprovedRecipes } from '../../hooks/queries/recipe.queries'
+import {
+	useGetAllUsers,
+	useUpdateUserRole
+} from '../../hooks/queries/user.queries'
 import { useAuthTokenStore } from '../../store/token'
 import { IActivityLevel } from '../../types/activityLevels.types'
 import { IGoalType } from '../../types/goalTypes.types'
 import { IMealTime } from '../../types/mealTimes.types'
 import { IProduct } from '../../types/product.types'
+import { Role } from '../../types/user.types'
 import ListItem from '../elements/list-item/ListItem'
 import RecipeItem from '../elements/recipe-item/RecipeItem'
 import AddActivityLevelModal from '../ui/modals/activity-level/AddActivityLevelModal'
@@ -50,13 +55,31 @@ type Section =
 	| 'goalTypes'
 	| 'mealTimes'
 	| 'recipes'
+	| 'users'
 
 export default function AdminPanelPage() {
 	const navigation = useTypedNavigation()
-	const { userRole } = useAuthTokenStore()
+	const { userRole, userId } = useAuthTokenStore()
 
 	// Выбранный раздел
 	const [activeSection, setActiveSection] = useState<Section>('products')
+
+	// Добавлено: данные пользователей
+	const {
+		data: users,
+		isLoading: isUsersLoading,
+		refetch: refetchUsers
+	} = useGetAllUsers()
+	const { mutate: updateUserRole } = useUpdateUserRole()
+
+	const handleRoleChange = (userId: string, newRole: number) => {
+		updateUserRole(
+			{ userId, newRole },
+			{
+				onSuccess: () => refetchUsers()
+			}
+		)
+	}
 
 	// ________________ Продукты ________________
 	const [searchQuery, setSearchQuery] = useState('')
@@ -167,7 +190,7 @@ export default function AdminPanelPage() {
 	}
 
 	// ________________ Проверка роли ________________
-	if (userRole !== 'Admin') {
+	if (userRole !== Role.Admin) {
 		return (
 			<View className='flex-1 justify-center items-center bg-slate-100'>
 				<Text className='text-3xl font-bold mb-4 text-red-500'>
@@ -227,6 +250,20 @@ export default function AdminPanelPage() {
 						}`}
 					>
 						Рецепты
+					</Text>
+				</TouchableOpacity>
+				<TouchableOpacity
+					className={`px-4 py-1 rounded ${
+						activeSection === 'users' ? 'bg-blue-500' : 'bg-gray-200'
+					}`}
+					onPress={() => setActiveSection('users')}
+				>
+					<Text
+						className={`font-semibold ${
+							activeSection === 'users' ? 'text-white' : 'text-gray-700'
+						}`}
+					>
+						Пользователи
 					</Text>
 				</TouchableOpacity>
 				<TouchableOpacity
@@ -556,6 +593,86 @@ export default function AdminPanelPage() {
 						) : (
 							<Text className='text-gray-500 mt-4'>
 								Нет рецептов для модерации
+							</Text>
+						)}
+					</View>
+				)
+
+			case 'users':
+				return (
+					<View className='px-5 pt-4'>
+						<Text className='text-base text-gray-600 font-semibold mb-4'>
+							Управление пользователями
+						</Text>
+
+						{isUsersLoading ? (
+							<ActivityIndicator size='large' color='#4CAF50' />
+						) : users && users.length > 0 ? (
+							users
+								.filter(user => user.id !== userId)
+								.map(user => {
+									const userRole =
+										user.role === 1
+											? 'Admin'
+											: user.role === 2
+											? 'Dietitian'
+											: 'User'
+
+									return (
+										<View
+											key={user.id}
+											className='bg-white p-4 rounded-lg mb-3'
+										>
+											<Text className='text-lg font-bold'>{user.name}</Text>
+											<Text className='text-gray-600'>{user.email}</Text>
+											<Text className='text-gray-600 mt-1'>
+												Роль:{' '}
+												{userRole === 'Admin'
+													? 'Администратор'
+													: userRole === 'Dietitian'
+													? 'Диетолог'
+													: 'Пользователь'}
+											</Text>
+
+											<View className='flex-row mt-2 space-x-2'>
+												<TouchableOpacity
+													className={`py-1 px-3 rounded ${
+														userRole === 'Admin' ? 'bg-blue-500' : 'bg-gray-300'
+													}`}
+													onPress={() => handleRoleChange(user.id, 1)}
+													disabled={userRole === 'Admin'}
+												>
+													<Text className='text-white'>Админ</Text>
+												</TouchableOpacity>
+
+												<TouchableOpacity
+													className={`py-1 px-3 rounded ${
+														userRole === 'Dietitian'
+															? 'bg-blue-500'
+															: 'bg-gray-300'
+													}`}
+													onPress={() => handleRoleChange(user.id, 2)}
+													disabled={userRole === 'Dietitian'}
+												>
+													<Text className='text-white'>Диетолог</Text>
+												</TouchableOpacity>
+
+												<TouchableOpacity
+													className={`py-1 px-3 rounded ${
+														userRole === 'User' ? 'bg-blue-500' : 'bg-gray-300'
+													}`}
+													onPress={() => handleRoleChange(user.id, 0)}
+													disabled={userRole === 'User'}
+												>
+													<Text className='text-white'>Пользователь</Text>
+												</TouchableOpacity>
+											</View>
+										</View>
+									)
+								})
+						) : (
+							<Text className='mt-4 text-gray-500'>
+								Пользователи не найдены
 							</Text>
 						)}
 					</View>

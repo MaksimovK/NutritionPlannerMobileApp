@@ -28,3 +28,31 @@ export function useUpdateUser() {
 		}
 	})
 }
+
+export function useGetAllUsers() {
+	return useQuery({
+		queryKey: ['allUsers'],
+		queryFn: async () => {
+			return userService.getAllUsers()
+		}
+	})
+}
+
+export function useUpdateUserRole() {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({
+			userId,
+			newRole
+		}: {
+			userId: string
+			newRole: number
+		}) => {
+			return userService.updateUserRole(userId, newRole)
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['allUsers'] })
+		}
+	})
+}

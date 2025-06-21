@@ -1,6 +1,6 @@
 export interface IUser {
 	id: string
-	role: string
+	role: number
 	name: string
 	email: string
 	age: number
@@ -9,4 +9,10 @@ export interface IUser {
 	weight: number
 	activityLevelId: number
 	createdAt: string
+}
+
+export enum Role {
+	User = 0,
+	Admin = 1,
+	Dietitian = 2
 }

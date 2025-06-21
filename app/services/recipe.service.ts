@@ -1,11 +1,21 @@
 import { axiosAuth } from '../api/interceptor'
-import { IRecipe, IRecipeCreateDto } from '../types/recipe.types'
+import { IRecipe, IRecipeCreateDto, RecipeFilter } from '../types/recipe.types'
 
 class RecipeService {
 	private BASE_URL = 'Recipes'
 
-	async getAll() {
-		const response = await axiosAuth.get<IRecipe[]>(this.BASE_URL)
+	async getAll(filter?: RecipeFilter) {
+		const response = await axiosAuth.get<IRecipe[]>(this.BASE_URL, {
+			params: {
+				highProtein: filter?.highProtein,
+				lowCalorie: filter?.lowCalorie,
+				highCalorie: filter?.highCalorie,
+				lowCarb: filter?.lowCarb,
+				highCarb: filter?.highCarb,
+				lowFat: filter?.lowFat,
+				highFat: filter?.highFat
+			}
+		})
 		return response.data
 	}
 
@@ -14,9 +24,18 @@ class RecipeService {
 		return response.data
 	}
 
-	async search(name: string) {
+	async search(name: string, filter?: RecipeFilter) {
 		const response = await axiosAuth.get<IRecipe[]>(`${this.BASE_URL}/search`, {
-			params: { name }
+			params: {
+				name,
+				highProtein: filter?.highProtein,
+				lowCalorie: filter?.lowCalorie,
+				highCalorie: filter?.highCalorie,
+				lowCarb: filter?.lowCarb,
+				highCarb: filter?.highCarb,
+				lowFat: filter?.lowFat,
+				highFat: filter?.highFat
+			}
 		})
 		return response.data
 	}
@@ -34,6 +53,22 @@ class RecipeService {
 
 	async deleteRecipe(id: number) {
 		await axiosAuth.delete(`${this.BASE_URL}/${id}`)
+	}
+
+	async getByIds(ids: number[]) {
+		const validIds = ids.filter(id => Number.isInteger(id))
+		if (validIds.length === 0) return []
+
+		const response = await axiosAuth.post<IRecipe[]>(
+			`${this.BASE_URL}/by-ids`,
+			validIds
+		)
+		return response.data
+	}
+
+	async getById(id: number) {
+		const response = await axiosAuth.get<IRecipe>(`${this.BASE_URL}/${id}`)
+		return response.data
 	}
 }
 

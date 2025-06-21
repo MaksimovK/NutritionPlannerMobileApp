@@ -19,7 +19,7 @@ export const useProductStore = create<IProductStore>()(
 					const isProductInStore = state.products.some(p => p.id === product.id)
 					if (isProductInStore) {
 						console.log(`Продукт с id ${product.id} уже существует в store.`)
-						return state // Возвращаем без изменений
+						return state
 					}
 
 					console.log(`Добавление продукта с id ${product.id} в store.`)
@@ -33,7 +33,7 @@ export const useProductStore = create<IProductStore>()(
 					)
 					if (!productExists) {
 						console.log(`Продукт с id ${id} не найден в store.`)
-						return state // Если продукта нет, возвращаем состояние без изменений
+						return state
 					}
 
 					console.log(`Удаление продукта с id ${id} из store.`)

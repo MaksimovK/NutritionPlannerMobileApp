@@ -7,10 +7,11 @@ import {
 	TouchableOpacity,
 	View
 } from 'react-native'
+import { EMPTY_TEXT, ROLE_TITLES } from '../../constants/roles'
 import { useTypedNavigation } from '../../hooks/navigation/useTypedNavigation'
 import { useClients, useDietitians } from '../../hooks/queries/chat.queries'
 import { useAuthTokenStore } from '../../store/token'
-import { IUser } from '../../types/user.types'
+import { IUser, Role } from '../../types/user.types'
 import ConversationScreen from './ConversationScreen'
 
 export default function ChatPage() {
@@ -18,11 +19,11 @@ export default function ChatPage() {
 	const { userId, userRole } = useAuthTokenStore()
 	const [selectedUser, setSelectedUser] = useState<IUser | null>(null)
 
-	// Получаем данные в зависимости от роли
 	const { data: dietitians } = useDietitians()
 	const { data: clients } = useClients(userId)
 
-	const users = userRole === 'User' ? dietitians : clients
+	const users =
+		userRole === Role.User || userRole === Role.Admin ? dietitians : clients
 
 	if (selectedUser) {
 		return (
@@ -30,7 +31,7 @@ export default function ChatPage() {
 				currentUserId={userId}
 				otherUser={selectedUser}
 				onBack={() => setSelectedUser(null)}
-				isDietitian={userRole === 'Dietitian'}
+				isDietitian={userRole === Role.Dietitian}
 			/>
 		)
 	}
@@ -48,7 +49,7 @@ export default function ChatPage() {
 					/>
 				</TouchableOpacity>
 				<Text style={styles.title} className='mr-auto'>
-					{userRole === 'User' ? 'Диетологи' : 'Ваши клиенты'}
+					{ROLE_TITLES[userRole]}
 				</Text>
 			</View>
 
@@ -72,11 +73,7 @@ export default function ChatPage() {
 					</TouchableOpacity>
 				)}
 				ListEmptyComponent={
-					<Text style={styles.emptyText}>
-						{userRole === 'User'
-							? 'Нет доступных диетологов'
-							: 'У вас пока нет клиентов'}
-					</Text>
+					<Text style={styles.emptyText}>{EMPTY_TEXT[userRole]}</Text>
 				}
 			/>
 		</View>

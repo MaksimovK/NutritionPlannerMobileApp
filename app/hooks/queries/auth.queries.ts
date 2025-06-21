@@ -11,6 +11,7 @@ export function useRegister() {
 		mutationFn: async (data: IRegisterRequest) => {
 			const response = await authService.register(data)
 			saveToken(response.token, response.userId, response.userRole)
+			console.log('user-date', saveToken)
 			return response
 		}
 	})

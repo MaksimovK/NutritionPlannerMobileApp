@@ -23,8 +23,8 @@ function AuthStack() {
 
 	return (
 		<Stack.Navigator screenOptions={{ headerShown: false }}>
-			<Stack.Screen name='RegisterPage' component={RegisterPage} />
 			<Stack.Screen name='LoginPage' component={LoginPage} />
+			<Stack.Screen name='RegisterPage' component={RegisterPage} />
 		</Stack.Navigator>
 	)
 }

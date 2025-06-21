@@ -79,6 +79,56 @@ export default function DiaryPage() {
 		})
 	}
 
+	const totalDailyCalories = data?.goals[0]?.calories || 0
+
+	const getMealTimeCalorieLimits = (
+		goalName: string
+	): Record<string, number> => {
+		const roundToTen = (value: number) => Math.round(value / 10) * 10
+
+		const goal = goalName.toLowerCase()
+
+		if (goal.includes('похудение') || goal.includes('снижение веса')) {
+			return {
+				Завтрак: roundToTen(totalDailyCalories * 0.3),
+				Обед: roundToTen(totalDailyCalories * 0.4),
+				Ужин: roundToTen(totalDailyCalories * 0.15),
+				Перекус: roundToTen(totalDailyCalories * 0.15)
+			}
+		}
+
+		if (goal.includes('набор массы') || goal.includes('увеличение массы')) {
+			return {
+				Завтрак: roundToTen(totalDailyCalories * 0.25),
+				Обед: roundToTen(totalDailyCalories * 0.3),
+				Ужин: roundToTen(totalDailyCalories * 0.35),
+				Перекус: roundToTen(totalDailyCalories * 0.1)
+			}
+		}
+
+		return {
+			Завтрак: roundToTen(totalDailyCalories * 0.3),
+			Обед: roundToTen(totalDailyCalories * 0.35),
+			Ужин: roundToTen(totalDailyCalories * 0.25),
+			Перекус: roundToTen(totalDailyCalories * 0.1)
+		}
+	}
+
+	const getCalorieLimit = (mealName: string) => {
+		const name = mealName.toLowerCase()
+
+		if (name.includes('завтрак')) return mealTimeLimits['Завтрак'] || 0
+
+		if (name.includes('обед')) return mealTimeLimits['Обед'] || 0
+
+		if (name.includes('ужин')) return mealTimeLimits['Ужин'] || 0
+
+		return mealTimeLimits['Перекус'] || 0
+	}
+
+	const goalName = goal?.name || ''
+	const mealTimeLimits = getMealTimeCalorieLimits(goalName)
+
 	if (dataError || mealTimesError || goalTypesError || mealPlanError) {
 		return (
 			<View className='flex-1 justify-center items-center'>
@@ -185,6 +235,7 @@ export default function DiaryPage() {
 								  )
 								: []
 						}
+						calorieLimit={getCalorieLimit(meal.name)}
 					/>
 				))}
 			</View>

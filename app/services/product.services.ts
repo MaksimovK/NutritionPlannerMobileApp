@@ -1,12 +1,42 @@
 import { axiosAuth } from '../api/interceptor'
-import { IProduct } from '../types/product.types'
+import { IProduct, ProductFilter } from '../types/product.types'
 
 class ProductServices {
 	private BASE_URL = 'Products'
 
-	async getAll({ page, size }: { size: number; page: number }) {
+	async getAll({
+		page,
+		size,
+		highProtein,
+		lowCalorie,
+		highCalorie,
+		lowCarb,
+		highCarb,
+		lowFat,
+		highFat
+	}: {
+		size: number
+		page: number
+		highProtein?: boolean
+		lowCalorie?: boolean
+		highCalorie?: boolean
+		lowCarb?: boolean
+		highCarb?: boolean
+		lowFat?: boolean
+		highFat?: boolean
+	}) {
 		const response = await axiosAuth.get<IProduct[]>(`${this.BASE_URL}`, {
-			params: { page, size }
+			params: {
+				page,
+				size,
+				highProtein,
+				lowCalorie,
+				highCalorie,
+				lowCarb,
+				highCarb,
+				lowFat,
+				highFat
+			}
 		})
 		return response.data
 	}
@@ -29,11 +59,22 @@ class ProductServices {
 		return response.data
 	}
 
-	async search(name: string) {
+	async search(name: string, filter?: ProductFilter) {
 		const response = await axiosAuth.get<IProduct[]>(
-			`${this.BASE_URL}/search?name=${name}`
+			`${this.BASE_URL}/search`,
+			{
+				params: {
+					name,
+					highProtein: filter?.highProtein,
+					lowCalorie: filter?.lowCalorie,
+					highCalorie: filter?.highCalorie,
+					lowCarb: filter?.lowCarb,
+					highCarb: filter?.highCarb,
+					lowFat: filter?.lowFat,
+					highFat: filter?.highFat
+				}
+			}
 		)
-
 		return response.data
 	}
 

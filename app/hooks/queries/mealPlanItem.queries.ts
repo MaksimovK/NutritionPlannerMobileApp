@@ -9,6 +9,33 @@ export const useGetMealPlanItems = (mealPlanId: number) => {
 	})
 }
 
+export const useAddRecipeToMealPlan = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationKey: ['addRecipeToMealPlan'],
+		mutationFn: async (params: {
+			mealPlanId: number
+			mealTimeId: number
+			recipeId: number
+			amount: number
+		}) => {
+			return mealPlanItemService.addRecipeToMealPlan(
+				params.mealPlanId,
+				params.mealTimeId,
+				params.recipeId,
+				params.amount
+			)
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['mealPlan'] })
+		},
+		onError: error => {
+			console.error('Ошибка добавления рецепта в план питания', error)
+		}
+	})
+}
+
 export const useAddProductToMealPlan = () => {
 	const queryClient = useQueryClient()
 

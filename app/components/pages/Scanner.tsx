@@ -11,7 +11,7 @@ import {
 	View
 } from 'react-native'
 import { Camera, CameraType } from 'react-native-camera-kit'
-import { axiosClassic } from '../../api/interceptor'
+import { axiosAuth } from '../../api/interceptor'
 import { useTypedNavigation } from '../../hooks/navigation/useTypedNavigation'
 import { IProduct } from '../../types/product.types'
 import Error from '../pages/Error'
@@ -72,7 +72,7 @@ export default function ScannerPage() {
 		console.log('Сканирован штрихкод:', barcode)
 
 		try {
-			const response = await axiosClassic.get<IProduct>(
+			const response = await axiosAuth.get<IProduct>(
 				`/Products/barcode/${barcode}`
 			)
 			const product = response.data

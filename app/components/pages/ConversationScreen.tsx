@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import {
 	FlatList,
 	Image,
+	Keyboard,
 	KeyboardAvoidingView,
 	Modal,
 	Platform,
@@ -41,6 +42,23 @@ const ConversationScreen = ({
 	const { mutate: sendMessage } = useSendMessage()
 	const { mutate: markAsRead } = useMarkAsRead()
 	const flatListRef = useRef<FlatList>(null)
+	const [keyboardHeight, setKeyboardHeight] = useState(0) // Добавлено
+	const [showReports, setShowReports] = useState(false)
+
+	// Подписка на события клавиатуры
+	useEffect(() => {
+		const showSubscription = Keyboard.addListener('keyboardDidShow', e => {
+			setKeyboardHeight(e.endCoordinates.height)
+		})
+		const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+			setKeyboardHeight(0)
+		})
+
+		return () => {
+			showSubscription.remove()
+			hideSubscription.remove()
+		}
+	}, [])
 
 	useEffect(() => {
 		if (!messages) return
@@ -61,7 +79,6 @@ const ConversationScreen = ({
 			}, 100)
 		}
 	}, [messages])
-	const [showReports, setShowReports] = useState(false)
 
 	const handleSend = () => {
 		if (!message.trim()) return
@@ -82,7 +99,7 @@ const ConversationScreen = ({
 		<KeyboardAvoidingView
 			style={styles.container}
 			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-			keyboardVerticalOffset={90}
+			keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
 		>
 			<View style={styles.header}>
 				<TouchableOpacity onPress={onBack}>
@@ -118,7 +135,10 @@ const ConversationScreen = ({
 				ref={flatListRef}
 				data={messages}
 				keyExtractor={item => item.id}
-				contentContainerStyle={styles.messagesContainer}
+				contentContainerStyle={[
+					styles.messagesContainer,
+					{ paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : 80 }
+				]}
 				onContentSizeChange={() =>
 					flatListRef.current?.scrollToEnd({ animated: true })
 				}
@@ -201,8 +221,8 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold'
 	},
 	messagesContainer: {
-		padding: 16,
-		paddingBottom: 80
+		padding: 16
+		// Убрали фиксированный paddingBottom
 	},
 	messageBubble: {
 		maxWidth: '80%',
@@ -235,7 +255,11 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		borderTopWidth: 1,
 		borderTopColor: '#eee',
-		alignItems: 'flex-end'
+		alignItems: 'flex-end',
+		position: 'absolute', // Изменено на абсолютное позиционирование
+		bottom: 0, // Прижато к низу
+		left: 0,
+		right: 0
 	},
 	input: {
 		flex: 1,

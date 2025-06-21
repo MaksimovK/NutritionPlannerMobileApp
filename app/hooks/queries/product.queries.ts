@@ -5,21 +5,25 @@ import {
 	useQueryClient
 } from '@tanstack/react-query'
 import { productService } from '../../services/product.services'
-import { IProduct } from '../../types/product.types'
+import { IProduct, ProductFilter } from '../../types/product.types'
 
 const ISSUE_SIZE = 10
 
-export const useGetAllProducts = () => {
+export const useGetAllProducts = (filter?: ProductFilter) => {
 	const fetchProducts = ({ pageParam = 0 }) => {
-		return productService.getAll({ size: ISSUE_SIZE, page: pageParam })
+		return productService.getAll({
+			size: ISSUE_SIZE,
+			page: pageParam,
+			...filter
+		})
 	}
 
 	const result = useInfiniteQuery({
-		queryKey: ['products'],
+		queryKey: ['products', filter],
 		queryFn: fetchProducts,
 		initialPageParam: 0,
 		getNextPageParam: (lastPage, allPages) => {
-			return lastPage.length < 10 ? undefined : allPages.length + 1
+			return lastPage.length < ISSUE_SIZE ? undefined : allPages.length
 		}
 	})
 
@@ -55,13 +59,12 @@ export function useGetProductById(id: number) {
 	})
 }
 
-export function useSearchProducts(name: string) {
+export function useSearchProducts(name: string, filter?: ProductFilter) {
 	return useQuery({
-		queryKey: ['search-products', name],
-		queryFn: async () => productService.search(name)
+		queryKey: ['search-products', name, filter], 
+		queryFn: async () => productService.search(name, filter)
 	})
 }
-
 export function useDeleteProduct() {
 	const queryClient = useQueryClient()
 
