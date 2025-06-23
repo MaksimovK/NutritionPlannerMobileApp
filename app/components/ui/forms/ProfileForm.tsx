@@ -54,6 +54,14 @@ export default function ProfileForm({
 	}
 
 	const onSubmit = async (formData: any) => {
+		console.log('data', {
+			...userData,
+			...formData,
+			age: Number(formData.age),
+			height: Number(formData.height),
+			weight: Number(formData.weight),
+			activityLevelId: formData.activityLevelId
+		})
 		updateUser(
 			{
 				...userData,

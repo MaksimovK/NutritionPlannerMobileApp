@@ -113,7 +113,7 @@ export default function ProfilePage() {
 				onPress={() => {
 					navigation.navigate('ChatPage')
 				}}
-				className='flex-row justify-center items-center space-x-2 border-black border rounded-xl mx-5 mt-5'
+				className='flex-row justify-center items-center space-x-2 border-black border rounded-xl mx-5 mt-2'
 			>
 				<Text className='text-black text-center py-3'>
 					{userRole === Role.Dietitian

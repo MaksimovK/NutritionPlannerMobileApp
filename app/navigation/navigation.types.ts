@@ -15,6 +15,11 @@ export type TypeRootStackParamList = {
 	AdminPanelPage: undefined
 	ScannerPage: undefined
 	ChatPage: undefined
+	FavoritesPage: {
+		mealTimeId: number
+		mealPlanId: number
+		mealTimeName: string
+	}
 	TermsPage: undefined
 }
 

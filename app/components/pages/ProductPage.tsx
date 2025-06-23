@@ -474,15 +474,33 @@ export default function ProductPage() {
 
 				<Text className='text-center font-bold text-xl'>{mealTimeName}</Text>
 
-				<TouchableOpacity
-					onPress={() => navigation.navigate('ScannerPage')}
-					className='p-2 rounded-full items-end justify-end rotate-90'
-				>
-					<Image
-						className='w-6 h-6'
-						source={require('../../assets/icons/scanner.png')}
-					/>
-				</TouchableOpacity>
+				<View className='flex-row'>
+					<TouchableOpacity
+						onPress={() => navigation.navigate('ScannerPage')}
+						className='p-2 rounded-full items-end justify-end rotate-90 mr-2'
+					>
+						<Image
+							className='w-6 h-6'
+							source={require('../../assets/icons/scanner.png')}
+						/>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						onPress={() =>
+							navigation.navigate('FavoritesPage', {
+								mealTimeId,
+								mealPlanId,
+								mealTimeName
+							})
+						}
+						className='p-2 rounded-full items-end justify-end'
+					>
+						<Image
+							className='w-6 h-6'
+							source={require('../../assets/icons/favorite-disabled.png')}
+						/>
+					</TouchableOpacity>
+				</View>
 			</View>
 
 			<View className='flex-row mb-2 border-b border-gray-300'>

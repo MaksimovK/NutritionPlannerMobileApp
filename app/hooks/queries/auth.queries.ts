@@ -26,10 +26,10 @@ export function useLogin() {
 
 			if (response.error) {
 				throw new Error(response.error)
+			} else {
+				saveToken(response.token, response.userId, response.userRole)
+				return response
 			}
-
-			saveToken(response.token, response.userId, response.userRole)
-			return response
 		}
 	})
 }
