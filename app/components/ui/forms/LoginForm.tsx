@@ -34,11 +34,18 @@ export default function LoginForm({ loginUser }: ILoginFormProps) {
 
 				reset()
 			},
-			onError: () => {
-				toastShow({
-					status: 'error',
-					text: 'Не удалось войти. Проверьте введённые данные.'
-				})
+			onError: (error: any) => {
+				if (error.message) {
+					toastShow({
+						status: 'error',
+						text: error.message
+					})
+				} else {
+					toastShow({
+						status: 'error',
+						text: 'Не удалось войти. Проверьте введённые данные.'
+					})
+				}
 			}
 		})
 	}

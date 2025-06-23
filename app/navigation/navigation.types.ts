@@ -15,6 +15,7 @@ export type TypeRootStackParamList = {
 	AdminPanelPage: undefined
 	ScannerPage: undefined
 	ChatPage: undefined
+	TermsPage: undefined
 }
 
 export interface IRoute {

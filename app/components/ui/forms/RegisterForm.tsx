@@ -1,7 +1,7 @@
 import { Picker } from '@react-native-picker/picker'
-import React from 'react'
+import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { useTypedNavigation } from '../../../hooks/navigation/useTypedNavigation'
 import { IActivityLevelsResponse } from '../../../types/activityLevels.types'
 import { IRegisterRequest } from '../../../types/auth.types'
@@ -39,8 +39,17 @@ export default function RegisterForm({
 		}
 	})
 	const navigation = useTypedNavigation()
+	const [isAgreed, setIsAgreed] = useState(false)
 
 	const onSubmit = (data: IRegisterRequest) => {
+		if (!isAgreed) {
+			toastShow({
+				status: 'error',
+				text: 'Вы должны согласиться с правилами'
+			})
+			return
+		}
+
 		registerUser(data, {
 			onSuccess: () => {
 				toastShow({
@@ -327,6 +336,25 @@ export default function RegisterForm({
 				</View>
 			)}
 
+			<View className='flex-row items-center mb-5 mt-2'>
+				<TouchableOpacity onPress={() => setIsAgreed(!isAgreed)}>
+					<View style={styles.checkboxContainer}>
+						<View style={[styles.checkbox, isAgreed && styles.checked]}>
+							{isAgreed && <Text style={styles.checkmark}>✓</Text>}
+						</View>
+					</View>
+				</TouchableOpacity>
+				<Text className='text-black ml-2'>
+					Я соглашаюсь с{' '}
+					<Text
+						className='text-blue-500 underline'
+						onPress={() => navigation.navigate('TermsPage')}
+					>
+						правилами сообщества
+					</Text>
+				</Text>
+			</View>
+
 			<TouchableOpacity
 				className='mb-5 w-full justify-center items-center rounded bg-[#4CAF50]'
 				onPress={handleSubmit(onSubmit)}
@@ -339,9 +367,37 @@ export default function RegisterForm({
 			<TouchableOpacity
 				className='justify-center items-center mb-8'
 				onPress={() => navigation.navigate('LoginPage')}
+				style={{ opacity: isAgreed ? 1 : 0.6 }}
+				disabled={!isAgreed}
 			>
 				<Text className='text-black font-semibold'>Есть аккаунт? Войти</Text>
 			</TouchableOpacity>
 		</View>
 	)
 }
+
+const styles = StyleSheet.create({
+	checkboxContainer: {
+		flexDirection: 'row',
+		alignItems: 'center'
+	},
+	checkbox: {
+		width: 24,
+		height: 24,
+		borderWidth: 1,
+		borderColor: '#ccc',
+		borderRadius: 4,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: '#fff'
+	},
+	checked: {
+		backgroundColor: '#4CAF50',
+		borderColor: '#4CAF50'
+	},
+	checkmark: {
+		color: 'white',
+		fontSize: 16,
+		fontWeight: 'bold'
+	}
+})

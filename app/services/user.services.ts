@@ -28,6 +28,19 @@ class UserServices {
 		})
 		return response.data
 	}
+
+	async blockUser(userId: string, blockedUntil: Date, reason: string) {
+		const response = await axiosAuth.post(`${this.BASE_URL}/${userId}/block`, {
+			blockedUntil: blockedUntil.toISOString(),
+			reason: reason
+		})
+		return response.data
+	}
+
+	async unblockUser(userId: string) {
+		const response = await axiosAuth.post(`${this.BASE_URL}/${userId}/unblock`)
+		return response.data
+	}
 }
 
 export const userService = new UserServices()

@@ -30,7 +30,9 @@ import {
 } from '../../hooks/queries/product.queries'
 import { useGetUnapprovedRecipes } from '../../hooks/queries/recipe.queries'
 import {
+	useBlockUser,
 	useGetAllUsers,
+	useUnblockUser,
 	useUpdateUserRole
 } from '../../hooks/queries/user.queries'
 import { useAuthTokenStore } from '../../store/token'
@@ -38,11 +40,13 @@ import { IActivityLevel } from '../../types/activityLevels.types'
 import { IGoalType } from '../../types/goalTypes.types'
 import { IMealTime } from '../../types/mealTimes.types'
 import { IProduct } from '../../types/product.types'
-import { Role } from '../../types/user.types'
+import { IUser, Role } from '../../types/user.types'
+import { formatDateTime } from '../../utils/formatDateTime'
 import ListItem from '../elements/list-item/ListItem'
 import RecipeItem from '../elements/recipe-item/RecipeItem'
 import AddActivityLevelModal from '../ui/modals/activity-level/AddActivityLevelModal'
 import UpdateActivityLevelModal from '../ui/modals/activity-level/UpdateActivityLevelModal'
+import BlockUserModal from '../ui/modals/BlockUserModal'
 import AddGoalTypeModal from '../ui/modals/goal-type/AddGoalTypeModal'
 import UpdateGoalTypeModal from '../ui/modals/goal-type/UpdateGoalTypeModal'
 import AddMealTimeModal from '../ui/modals/meal-time/AddMealTimeModal'
@@ -71,6 +75,7 @@ export default function AdminPanelPage() {
 		refetch: refetchUsers
 	} = useGetAllUsers()
 	const { mutate: updateUserRole } = useUpdateUserRole()
+	const { mutate: unblockUser } = useUnblockUser()
 
 	const handleRoleChange = (userId: string, newRole: number) => {
 		updateUserRole(
@@ -79,6 +84,34 @@ export default function AdminPanelPage() {
 				onSuccess: () => refetchUsers()
 			}
 		)
+	}
+	const [blockModalVisible, setBlockModalVisible] = useState(false)
+	const [selectedUser, setSelectedUser] = useState<IUser | null>(null)
+	const { mutate: blockUser } = useBlockUser()
+
+	const handleToggleBlock = (user: IUser) => {
+		if (user.isBlocked) {
+			unblockUser(user.id, {
+				onSuccess: () => refetchUsers()
+			})
+		} else {
+			setSelectedUser(user)
+			setBlockModalVisible(true)
+		}
+	}
+
+	const handleConfirmBlock = (date: Date, reason: string) => {
+		if (selectedUser) {
+			blockUser(
+				{ userId: selectedUser.id, blockedUntil: date, reason: reason },
+				{
+					onSuccess: () => {
+						setBlockModalVisible(false)
+						refetchUsers()
+					}
+				}
+			)
+		}
 	}
 
 	// ________________ Продукты ________________
@@ -587,7 +620,7 @@ export default function AdminPanelPage() {
 						) : unapprovedRecipes && unapprovedRecipes.length > 0 ? (
 							unapprovedRecipes.map(recipe => (
 								<View key={recipe.id} className='mb-2'>
-									<RecipeItem recipe={recipe} isApprove={true} />
+									<RecipeItem recipe={recipe} />
 								</View>
 							))
 						) : (
@@ -604,6 +637,13 @@ export default function AdminPanelPage() {
 						<Text className='text-base text-gray-600 font-semibold mb-4'>
 							Управление пользователями
 						</Text>
+
+						<BlockUserModal
+							visible={blockModalVisible}
+							onClose={() => setBlockModalVisible(false)}
+							onBlock={handleConfirmBlock}
+							userName={selectedUser?.name || ''}
+						/>
 
 						{isUsersLoading ? (
 							<ActivityIndicator size='large' color='#4CAF50' />
@@ -625,6 +665,20 @@ export default function AdminPanelPage() {
 										>
 											<Text className='text-lg font-bold'>{user.name}</Text>
 											<Text className='text-gray-600'>{user.email}</Text>
+
+											{user.isBlocked && user.blockedUntil && (
+												<View className='bg-red-100 px-2 py-1 rounded mt-1'>
+													<Text className='text-red-600 text-xs'>
+														Заблокирован до: {formatDateTime(user.blockedUntil)}
+													</Text>
+													{user.blockReason && (
+														<Text className='text-red-600 text-xs mt-1'>
+															Причина: {user.blockReason}
+														</Text>
+													)}
+												</View>
+											)}
+
 											<Text className='text-gray-600 mt-1'>
 												Роль:{' '}
 												{userRole === 'Admin'
@@ -634,7 +688,7 @@ export default function AdminPanelPage() {
 													: 'Пользователь'}
 											</Text>
 
-											<View className='flex-row mt-2 space-x-2'>
+											<View className='flex-row mt-2 flex-wrap gap-2'>
 												<TouchableOpacity
 													className={`py-1 px-3 rounded ${
 														userRole === 'Admin' ? 'bg-blue-500' : 'bg-gray-300'
@@ -665,6 +719,19 @@ export default function AdminPanelPage() {
 													disabled={userRole === 'User'}
 												>
 													<Text className='text-white'>Пользователь</Text>
+												</TouchableOpacity>
+
+												<TouchableOpacity
+													className={`py-1 px-3 rounded ${
+														user.isBlocked ? 'bg-green-500' : 'bg-red-500'
+													}`}
+													onPress={() => handleToggleBlock(user)}
+												>
+													<Text className='text-white'>
+														{user.isBlocked
+															? 'Разблокировать'
+															: 'Заблокировать'}
+													</Text>
 												</TouchableOpacity>
 											</View>
 										</View>

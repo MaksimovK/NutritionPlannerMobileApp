@@ -11,7 +11,6 @@ export function useRegister() {
 		mutationFn: async (data: IRegisterRequest) => {
 			const response = await authService.register(data)
 			saveToken(response.token, response.userId, response.userRole)
-			console.log('user-date', saveToken)
 			return response
 		}
 	})
@@ -24,6 +23,11 @@ export function useLogin() {
 		mutationKey: ['login'],
 		mutationFn: async (data: ILoginRequest) => {
 			const response = await authService.login(data)
+
+			if (response.error) {
+				throw new Error(response.error)
+			}
+
 			saveToken(response.token, response.userId, response.userRole)
 			return response
 		}

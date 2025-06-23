@@ -1,3 +1,5 @@
+import { Role } from './user.types'
+
 // Запрос на регистрацию
 export interface IRegisterRequest {
 	email: string
@@ -15,7 +17,7 @@ export interface IRegisterRequest {
 export interface IRegisterResponse {
 	userId: string
 	token: string
-	userRole: string
+	userRole: Role
 }
 
 // Запрос на вход
@@ -28,5 +30,6 @@ export interface ILoginRequest {
 export interface ILoginResponse {
 	userId: string
 	token: string
-	userRole: string
+	userRole: Role
+	error?: string
 }

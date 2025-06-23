@@ -9,6 +9,9 @@ export interface IUser {
 	weight: number
 	activityLevelId: number
 	createdAt: string
+	isBlocked: boolean
+	blockedUntil?: string
+	blockReason?: string
 }
 
 export enum Role {

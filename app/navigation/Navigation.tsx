@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React from 'react'
 import LoginPage from '../components/pages/LoginPage'
 import RegisterPage from '../components/pages/RegisterPage'
+import TermsPage from '../components/pages/TermsPage'
 import { useAuthTokenStore } from '../store/token'
 import { TypeRootStackParamList } from './navigation.types'
 import { routes } from './route'
@@ -25,6 +26,7 @@ function AuthStack() {
 		<Stack.Navigator screenOptions={{ headerShown: false }}>
 			<Stack.Screen name='LoginPage' component={LoginPage} />
 			<Stack.Screen name='RegisterPage' component={RegisterPage} />
+			<Stack.Screen name='TermsPage' component={TermsPage} />
 		</Stack.Navigator>
 	)
 }
