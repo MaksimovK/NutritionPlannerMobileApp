@@ -476,16 +476,6 @@ export default function ProductPage() {
 
 				<View className='flex-row'>
 					<TouchableOpacity
-						onPress={() => navigation.navigate('ScannerPage')}
-						className='p-2 rounded-full items-end justify-end rotate-90 mr-2'
-					>
-						<Image
-							className='w-6 h-6'
-							source={require('../../assets/icons/scanner.png')}
-						/>
-					</TouchableOpacity>
-
-					<TouchableOpacity
 						onPress={() =>
 							navigation.navigate('FavoritesPage', {
 								mealTimeId,
@@ -498,6 +488,16 @@ export default function ProductPage() {
 						<Image
 							className='w-6 h-6'
 							source={require('../../assets/icons/favorite-disabled.png')}
+						/>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						onPress={() => navigation.navigate('ScannerPage')}
+						className='p-2 rounded-full items-end justify-end rotate-90 mr-2'
+					>
+						<Image
+							className='w-6 h-6'
+							source={require('../../assets/icons/scanner.png')}
 						/>
 					</TouchableOpacity>
 				</View>

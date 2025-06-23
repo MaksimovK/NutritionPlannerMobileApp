@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
+import {
+	FlatList,
+	Image,
+	Modal,
+	Text,
+	TouchableOpacity,
+	View
+} from 'react-native'
 import { useTypedNavigation } from '../../hooks/navigation/useTypedNavigation'
 import { useTypedRoute } from '../../hooks/navigation/useTypedRoute'
 import {
@@ -9,8 +16,12 @@ import {
 import { useFavoritesStore } from '../../store/favorites'
 import { useProductStore } from '../../store/products'
 import { useRecipeStore } from '../../store/recipes'
+import { IProduct } from '../../types/product.types'
+import { IRecipe } from '../../types/recipe.types'
 import ProductItem from '../elements/product-item/ProductItem'
 import RecipeItem from '../elements/recipe-item/RecipeItem'
+import AddProductModal from '../ui/modals/AddProductModal' // Импортируем модалку для продуктов
+import AddRecipeModal from '../ui/modals/AddRecipeModal' // Импортируем модалку для рецептов
 
 export default function FavoritesPage() {
 	const navigation = useTypedNavigation()
@@ -18,6 +29,12 @@ export default function FavoritesPage() {
 	const { mealTimeId, mealPlanId, mealTimeName } = route.params
 	const [activeTab, setActiveTab] = useState<'products' | 'recipes'>('products')
 	const [isAtBottom, setIsAtBottom] = useState(false)
+
+	// Состояния для модальных окон
+	const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null)
+	const [isProductModalVisible, setIsProductModalVisible] = useState(false)
+	const [selectedRecipe, setSelectedRecipe] = useState<IRecipe | null>(null)
+	const [isRecipeModalVisible, setIsRecipeModalVisible] = useState(false)
 
 	const {
 		favoriteProducts,
@@ -34,24 +51,24 @@ export default function FavoritesPage() {
 	const { mutate: addProductToMealPlan } = useAddProductToMealPlan()
 	const { mutate: addRecipeToMealPlan } = useAddRecipeToMealPlan()
 
-	const handleProductPress = (product: any) => {
-		const isProductInStore = products.some(item => item.id === product.id)
-
-		if (isProductInStore) {
-			removeProduct(product.id)
-		} else {
-			addProduct(product)
-		}
+	const handleProductPress = (product: IProduct) => {
+		setSelectedProduct(product)
+		setIsProductModalVisible(true)
 	}
 
-	const handleRecipePress = (recipe: any) => {
-		const isRecipeInStore = recipes.some(r => r.id === recipe.id)
+	const handleRecipePress = (recipe: IRecipe) => {
+		setSelectedRecipe(recipe)
+		setIsRecipeModalVisible(true)
+	}
 
-		if (isRecipeInStore) {
-			removeRecipe(recipe.id)
-		} else {
-			addRecipe(recipe)
-		}
+	const handleAddProduct = (product: IProduct, weight: number) => {
+		addProduct({ ...product, weight })
+		setIsProductModalVisible(false)
+	}
+
+	const handleAddRecipe = (recipe: IRecipe, weight: number) => {
+		addRecipe({ ...recipe, weight })
+		setIsRecipeModalVisible(false)
 	}
 
 	const handleAddSelectedProducts = async () => {
@@ -235,6 +252,36 @@ export default function FavoritesPage() {
 					)}
 				</>
 			)}
+
+			{/* Модальное окно для выбора веса продукта */}
+			<Modal
+				animationType='slide'
+				transparent={true}
+				visible={isProductModalVisible}
+				onRequestClose={() => setIsProductModalVisible(false)}
+			>
+				{selectedProduct && (
+					<AddProductModal
+						product={selectedProduct}
+						onClose={() => setIsProductModalVisible(false)}
+					/>
+				)}
+			</Modal>
+
+			{/* Модальное окно для выбора веса рецепта */}
+			<Modal
+				animationType='slide'
+				transparent={true}
+				visible={isRecipeModalVisible}
+				onRequestClose={() => setIsRecipeModalVisible(false)}
+			>
+				{selectedRecipe && (
+					<AddRecipeModal
+						recipe={selectedRecipe}
+						onClose={() => setIsRecipeModalVisible(false)}
+					/>
+				)}
+			</Modal>
 		</View>
 	)
 }
