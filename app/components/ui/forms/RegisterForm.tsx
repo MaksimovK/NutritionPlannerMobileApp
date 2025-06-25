@@ -1,7 +1,13 @@
 import { Picker } from '@react-native-picker/picker'
 import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {
+	StyleSheet,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View
+} from 'react-native'
 import { useTypedNavigation } from '../../../hooks/navigation/useTypedNavigation'
 import { IActivityLevelsResponse } from '../../../types/activityLevels.types'
 import { IRegisterRequest } from '../../../types/auth.types'
@@ -161,7 +167,8 @@ export default function RegisterForm({
 				name='height'
 				rules={{
 					required: 'Рост обязателен',
-					min: { value: 1, message: 'Рост должен быть больше 0' }
+					min: { value: 1, message: 'Рост должен быть больше 0' },
+					max: { value: 300, message: 'Рост должен быть меньше 300' }
 				}}
 				render={({ field: { onChange, value } }) => (
 					<TextInput
@@ -187,7 +194,8 @@ export default function RegisterForm({
 				name='weight'
 				rules={{
 					required: 'Вес обязателен',
-					min: { value: 1, message: 'Вес должен быть больше 0' }
+					min: { value: 1, message: 'Вес должен быть больше 0' },
+					max: { value: 400, message: 'Вес должен быть меньше 600' }
 				}}
 				render={({ field: { onChange, value } }) => (
 					<TextInput

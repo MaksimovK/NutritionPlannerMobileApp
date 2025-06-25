@@ -1,7 +1,7 @@
 import axios, { CreateAxiosDefaults } from 'axios'
 import { useAuthTokenStore } from '../store/token'
 
-const BASE_URL = 'http://192.168.0.195:7086/api'
+const BASE_URL = 'http://192.168.120.35:7086/api'
 
 export const options: CreateAxiosDefaults = {
 	baseURL: BASE_URL,
